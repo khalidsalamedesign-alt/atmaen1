@@ -1,0 +1,86 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+<Base title="مؤقّت تبريد الحرق" description="عدّاد تنازلي لتبريد الحرق تحت الماء الجاري لمدة ٢٠ دقيقة كاملة." back="/case/thermal-burn">
+  <h1>مؤقّت تبريد الحرق</h1>
+  <p class="muted">ضع الحرق تحت <strong>ماء جارٍ بارد أو فاتر</strong> — ليس مثلجاً — واترك المؤقّت يكمل.</p>
+
+  <div class="burn">
+    <div class="ring" aria-hidden="true">
+      <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" class="track" /><circle cx="50" cy="50" r="45" class="bar" id="bar" /></svg>
+      <div class="time" id="time" role="timer" aria-live="off">٢٠:٠٠</div>
+    </div>
+    <div class="done" id="done" hidden>انتهى التبريد ✓ غطّ الحرق بغلاف بلاستيك أو قماش نظيف</div>
+    <div class="ctrls">
+      <button class="btn btn-primary" type="button" id="toggle">ابدأ</button>
+      <button class="btn" type="button" id="reset">إعادة</button>
+    </div>
+    <ul class="tips nonessential">
+      <li>أثناء التبريد انزع الخواتم والملابس القريبة — إلا اللاصقة بالجلد.</li>
+      <li>حافظ على دفء باقي الجسم، خاصة الأطفال.</li>
+      <li>لا ثلج، لا معجون أسنان، لا زيت.</li>
+    </ul>
+  </div>
+
+  <style>
+    .burn { display: grid; gap: 1rem; margin-top: 1rem; }
+    .ring { position: relative; max-width: 18rem; width: 100%; margin-inline: auto; aspect-ratio: 1; }
+    .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .ring circle { fill: none; stroke-width: 7; }
+    .track { stroke: var(--line); }
+    .bar { stroke: var(--brand); stroke-linecap: round; stroke-dasharray: 282.74; stroke-dashoffset: 0; transition: stroke-dashoffset .5s linear; }
+    .time { position: absolute; inset: 0; display: grid; place-items: center; font-size: 4rem; font-weight: 700; direction: ltr; }
+    .done { text-align: center; font-size: 1.25rem; font-weight: 700; padding: 1rem; border-radius: 12px; background: var(--green-soft); color: var(--green); }
+    .ctrls { display: grid; grid-template-columns: 2fr 1fr; gap: .6rem; }
+    .ctrls .btn { font-size: 1.4rem; min-height: 4rem; }
+    .tips { list-style: disc; padding-inline-start: 1.4rem; color: var(--ink-2); }
+  </style>
+
+  <script is:inline>
+    (function () {
+      var TOTAL = 20 * 60 * 1000, C = 282.74;
+      var ar = function (s) { return s.replace(/\d/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'[d]; }); };
+      var timeEl = document.getElementById('time'), bar = document.getElementById('bar'), done = document.getElementById('done');
+      var toggle = document.getElementById('toggle'), reset = document.getElementById('reset');
+      var remaining = TOTAL, endAt = 0, iv = null, wake = null;
+
+      function render() {
+        var s = Math.ceil(remaining / 1000);
+        timeEl.textContent = ar(String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'));
+        bar.style.strokeDashoffset = String(C * (1 - remaining / TOTAL));
+      }
+      async function lock() { try { if ('wakeLock' in navigator) wake = await navigator.wakeLock.request('screen'); } catch (e) {} }
+      function unlock() { if (wake) { wake.release().catch(function () {}); wake = null; } }
+
+      function alarm() {
+        try {
+          var ctx = new (window.AudioContext || window.webkitAudioContext)();
+          [0, .35, .7, 1.05].forEach(function (t) {
+            var o = ctx.createOscillator(), g = ctx.createGain();
+            o.frequency.value = 988; g.gain.setValueAtTime(.5, ctx.currentTime + t); g.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + t + .25);
+            o.connect(g); g.connect(ctx.destination); o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + .3);
+          });
+        } catch (e) {}
+        if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 600]);
+      }
+
+      function loop() {
+        remaining = Math.max(0, endAt - Date.now());
+        render();
+        if (remaining === 0) { pause(); done.hidden = false; toggle.textContent = 'ابدأ'; alarm(); }
+      }
+      function start() {
+        if (remaining === 0) remaining = TOTAL;
+        done.hidden = true; endAt = Date.now() + remaining;
+        iv = setInterval(loop, 250); loop();
+        toggle.textContent = 'إيقاف مؤقت'; lock();
+      }
+      function pause() { clearInterval(iv); iv = null; toggle.textContent = 'متابعة'; unlock(); }
+
+      toggle.addEventListener('click', function () { iv ? pause() : start(); });
+      reset.addEventListener('click', function () { pause(); remaining = TOTAL; done.hidden = true; toggle.textContent = 'ابدأ'; render(); });
+      document.addEventListener('visibilitychange', function () { if (iv && document.visibilityState === 'visible') { loop(); lock(); } });
+      render();
+    })();
+  </script>
+</Base>

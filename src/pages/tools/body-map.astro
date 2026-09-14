@@ -1,0 +1,88 @@
+---
+import Base from '../../layouts/Base.astro';
+import CaseRow from '../../components/CaseRow.astro';
+import { getCase, type Case } from '../../lib/util';
+
+// الخريطة للتصفّح فقط — لا تشخّص. المستخدم يختار المنطقة ويشوف الحالات المرتبطة.
+const regions = [
+  { id: 'head', name: 'الرأس', cases: ['fall-fracture', 'fainting', 'seizures', 'heat-stroke'] },
+  { id: 'eye', name: 'العين', cases: ['eye-foreign-body', 'chemical-burn'] },
+  { id: 'nose', name: 'الأنف', cases: ['nosebleed'] },
+  { id: 'throat', name: 'الفم والحلق', cases: ['choking-adult', 'choking-child', 'choking-infant', 'swallowed-object', 'cleaning-products'] },
+  { id: 'chest', name: 'الصدر والتنفس', cases: ['cpr', 'asthma-attack', 'drowning', 'electric-shock'] },
+  { id: 'belly', name: 'البطن', cases: ['food-poisoning', 'swallowed-object', 'cleaning-products'] },
+  { id: 'arm', name: 'الذراع واليد', cases: ['cut-wound', 'severe-bleeding', 'amputation', 'thermal-burn', 'sprain', 'fall-fracture'] },
+  { id: 'leg', name: 'الساق والقدم', cases: ['sprain', 'fall-fracture', 'snake-bite', 'scorpion-sting', 'cut-wound'] },
+  { id: 'skin', name: 'الجلد', cases: ['thermal-burn', 'chemical-burn', 'electrical-burn', 'sunburn', 'bee-sting', 'scorpion-sting'] },
+  { id: 'whole', name: 'الجسم كله', cases: ['low-blood-sugar', 'heat-stroke', 'fainting', 'seizures'] },
+].map((r) => ({ ...r, items: r.cases.map(getCase).filter(Boolean) as Case[] }));
+---
+<Base title="ابحث حسب العضو" description="اضغط على منطقة من الجسم لتشوف حالات الإسعافات الأولية المرتبطة بها.">
+  <h1>ابحث حسب العضو</h1>
+  <p class="muted">اضغط على المنطقة المصابة. <strong>هذي الخريطة للتصفّح فقط ولا تشخّص.</strong></p>
+
+  <div class="bodymap">
+    <svg viewBox="0 0 200 400" role="group" aria-label="خريطة الجسم">
+      <g class="region" data-region="head" tabindex="-1"><circle cx="100" cy="42" r="30" /></g>
+      <g class="region" data-region="eye"><circle cx="89" cy="37" r="7" /><circle cx="111" cy="37" r="7" /></g>
+      <g class="region" data-region="nose"><ellipse cx="100" cy="49" rx="5" ry="7" /></g>
+      <g class="region" data-region="throat"><rect x="86" y="72" width="28" height="18" rx="6" /></g>
+      <g class="region" data-region="chest"><path d="M58 92h84l6 70H52z" /></g>
+      <g class="region" data-region="belly"><path d="M52 164h96l-6 66H58z" /></g>
+      <g class="region" data-region="arm">
+        <path d="M56 94l-8 4-22 96 14 4 20-80z" />
+        <path d="M144 94l8 4 22 96-14 4-20-80z" />
+        <circle cx="31" cy="208" r="10" /><circle cx="169" cy="208" r="10" />
+      </g>
+      <g class="region" data-region="leg">
+        <path d="M60 232h38l-4 140H70z" />
+        <path d="M102 232h38l-10 140h-24z" />
+        <ellipse cx="80" cy="382" rx="16" ry="8" /><ellipse cx="120" cy="382" rx="16" ry="8" />
+      </g>
+    </svg>
+
+    <div>
+      <div class="region-btns" role="tablist" aria-label="مناطق الجسم">
+        {regions.map((r, i) => (
+          <button type="button" role="tab" data-region={r.id} aria-selected={i === 0 ? 'true' : 'false'} aria-controls={`p-${r.id}`}>{r.name}</button>
+        ))}
+      </div>
+      {regions.map((r, i) => (
+        <section class="panel" id={`p-${r.id}`} data-panel={r.id} role="tabpanel" hidden={i !== 0}>
+          <h2>{r.name}</h2>
+          <div class="grid">{r.items.map((c) => <CaseRow item={c} />)}</div>
+        </section>
+      ))}
+    </div>
+  </div>
+
+  <style>
+    .bodymap { display: grid; gap: 1.25rem; margin-top: 1rem; }
+    @media (min-width: 44rem) { .bodymap { grid-template-columns: 15rem 1fr; align-items: start; } }
+    .bodymap svg { width: 100%; max-width: 13rem; margin-inline: auto; display: block; }
+    .region * { fill: var(--surface); stroke: var(--ink-2); stroke-width: 2; cursor: pointer; transition: fill .15s; }
+    .region:hover * { fill: var(--brand-soft); }
+    .region.on * { fill: var(--brand); stroke: var(--brand); }
+    .region[data-region='eye'] *, .region[data-region='nose'] * { stroke-width: 1.5; }
+    .region-btns { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+    .region-btns button { font: inherit; font-weight: 700; padding: .45rem .9rem; border-radius: 999px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+    .region-btns button[aria-selected='true'] { background: var(--brand-strong); border-color: var(--brand-strong); color: var(--on-brand); }
+  </style>
+
+  <script is:inline>
+    (function () {
+      var btns = document.querySelectorAll('.region-btns [data-region]');
+      function show(id, scroll) {
+        btns.forEach(function (b) { b.setAttribute('aria-selected', b.dataset.region === id ? 'true' : 'false'); });
+        document.querySelectorAll('[data-panel]').forEach(function (p) { p.hidden = p.dataset.panel !== id; });
+        document.querySelectorAll('svg .region').forEach(function (g) { g.classList.toggle('on', g.dataset.region === id); });
+        if (scroll && window.innerWidth < 700) document.getElementById('p-' + id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      btns.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.region, false); }); });
+      document.querySelectorAll('svg .region').forEach(function (g) {
+        g.addEventListener('click', function (e) { e.stopPropagation(); show(g.dataset.region, true); });
+      });
+      show('head', false);
+    })();
+  </script>
+</Base>

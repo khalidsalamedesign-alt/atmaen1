@@ -1,0 +1,24 @@
+---
+import Base from '../../layouts/Base.astro';
+import CaseRow from '../../components/CaseRow.astro';
+import Icon from '../../components/Icon.astro';
+import { allCases, arNum } from '../../lib/util';
+import { ages, planned } from '../../data/taxonomy';
+
+export function getStaticPaths() {
+  return ages.map((a) => ({ params: { id: a.id }, props: { age: a } }));
+}
+const { age } = Astro.props;
+const items = allCases.filter((c) => c.ageGroup.includes(age.id));
+const soon = planned.filter((p) => p.ageGroup.includes(age.id) || p.ageGroup.includes('all'));
+---
+<Base title={`إسعافات ${age.name}`} description={`الإسعافات الأولية الخاصة بـ${age.name}.`}>
+  <header class="page-head">
+    <span class="chip-icon"><Icon name={age.icon} size={28} /></span>
+    <div><h1>{age.name}</h1><p>{age.hint ? `${age.hint} · ` : ''}{arNum(items.length)} حالة</p></div>
+  </header>
+  <div class="grid">
+    {items.map((c) => <CaseRow item={c} />)}
+    {soon.map((p) => <CaseRow planned={p} />)}
+  </div>
+</Base>

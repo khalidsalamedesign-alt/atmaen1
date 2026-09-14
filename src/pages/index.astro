@@ -1,0 +1,163 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { allCases, arNum } from '../lib/util';
+import { categories, ages, planned } from '../data/taxonomy';
+
+const featured = [
+  { label: 'اختناق', sub: 'بالغ · طفل · رضيع', href: '/case/choking-adult', icon: 'choking' },
+  { label: 'توقف التنفس', sub: 'إنعاش مع مؤقّت الإيقاع', href: '/case/cpr', icon: 'heart' },
+];
+const critical = [
+  { label: 'نزيف شديد', href: '/case/severe-bleeding', icon: 'drop' },
+  { label: 'حرق', href: '/case/thermal-burn', icon: 'flame' },
+  { label: 'صدمة كهربائية', href: '/case/electric-shock', icon: 'bolt' },
+  { label: 'إغماء', href: '/case/fainting', icon: 'person-down' },
+  { label: 'تسمم', href: '/case/cleaning-products', icon: 'bottle' },
+  { label: 'لدغة', href: '/category/poison-bites', icon: 'snake' },
+];
+const quick = [
+  ['طفل بلع شي', '/case/swallowed-object'],
+  ['نزيف الأنف', '/case/nosebleed'],
+  ['تشنجات', '/case/seizures'],
+  ['لدغة عقرب', '/case/scorpion-sting'],
+  ['ضربة شمس', '/case/heat-stroke'],
+];
+const count = (id: string) => allCases.filter((c) => c.category === id).length;
+
+const index = [
+  ...allCases.map((c) => ({ t: c.title, k: `${c.keywords} ${c.summary}`, h: `/case/${c.id}` })),
+  ...planned.map((p) => ({ t: p.title, k: p.keywords, h: null })),
+];
+---
+<Base title="الرئيسية">
+  <section class="hero">
+    <span class="eyebrow nonessential"><span class="dot"></span>يعمل حتى بدون إنترنت</span>
+    <h1>وش صاير؟ <span>اكتب الحالة أو اختر من تحت — نمشي معك خطوة خطوة</span></h1>
+
+    <form class="search" role="search" onsubmit="return false">
+      <label for="q" class="sr-only">ابحث عن الحالة</label>
+      <div class="search-field">
+        <Icon name="search" size={24} />
+        <input id="q" type="search" placeholder="اختناق، حرق، نزيف…" autocomplete="off" enterkeyhint="search" />
+      </div>
+      <div class="results" id="results" aria-live="polite"></div>
+    </form>
+
+    <div class="quick nonessential" aria-label="بحث سريع">
+      {quick.map(([t, h]) => <a href={h}>{t}</a>)}
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="h-crit">
+    <div class="section-title"><h2 id="h-crit">حالات حرجة</h2></div>
+    <div class="bento">
+      {featured.map((c, i) => (
+        <a class="tile feature" href={c.href} style={`--i:${i}`}>
+          <span class="chip-icon"><Icon name={c.icon} class={c.icon === 'heart' ? 'beat' : ''} /></span>
+          <span><span class="t-title">{c.label}</span><span class="t-sub">{c.sub}</span></span>
+          <Icon name="chev" class="chev" />
+        </a>
+      ))}
+      {critical.map((c, i) => (
+        <a class="tile" href={c.href} style={`--i:${i + 2}`}>
+          <span class="crit-dot" aria-hidden="true"></span>
+          <span class="chip-icon"><Icon name={c.icon} /></span>
+          <span class="t-title">{c.label}</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="section nonessential" aria-labelledby="h-age">
+    <div class="section-title"><h2 id="h-age">حسب العمر</h2></div>
+    <div class="ages">
+      {ages.map((a) => (
+        <a class="age" href={`/age/${a.id}`}>
+          <span class="chip-icon"><Icon name={a.icon} /></span>
+          {a.name}
+          {a.hint && <small>{a.hint}</small>}
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="section nonessential" aria-labelledby="h-cat">
+    <div class="section-title"><h2 id="h-cat">حسب التصنيف</h2></div>
+    <div class="cats">
+      {categories.map((c) => (
+        <a class="cat" href={`/category/${c.id}`}>
+          <span class="chip-icon"><Icon name={c.icon} /></span>
+          <span><strong>{c.name}</strong><span>{arNum(count(c.id))} حالات</span></span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="section nonessential" aria-labelledby="h-tools">
+    <div class="section-title"><h2 id="h-tools">أدوات تساعدك</h2><a href="/tools">الكل</a></div>
+    <div class="tools">
+      <a class="tool-card glow" href="/tools/cpr-timer">
+        <span><strong>مؤقّت الإنعاش</strong><span>إيقاع ١١٠ ضغطة بالدقيقة — صوت واهتزاز</span></span>
+        <span class="chip-icon" style="margin-inline-start:auto"><Icon name="heart" class="beat" /></span>
+      </a>
+      <a class="tool-card" href="/tools/body-map">
+        <span class="chip-icon"><Icon name="adult" /></span>
+        <span><strong>ابحث حسب العضو</strong><span>اضغط على مكان الإصابة</span></span>
+      </a>
+      <a class="tool-card" href="/tools/burn-timer">
+        <span class="chip-icon"><Icon name="timer" /></span>
+        <span><strong>مؤقّت الحرق</strong><span>تبريد ٢٠ دقيقة</span></span>
+      </a>
+      <a class="tool-card" href="/tools/family-card">
+        <span class="chip-icon"><Icon name="home" /></span>
+        <span><strong>بطاقة العائلة</strong><span>تبقى على جهازك</span></span>
+      </a>
+      <a class="tool-card" href="/first-aid-kit">
+        <span class="chip-icon"><Icon name="doc" /></span>
+        <span><strong>حقيبة الإسعافات</strong><span>قائمة تأشير</span></span>
+      </a>
+    </div>
+  </section>
+
+  <script type="application/json" id="idx" set:html={JSON.stringify(index)} />
+  <script is:inline>
+    (function () {
+      var data = JSON.parse(document.getElementById('idx').textContent);
+      var input = document.getElementById('q');
+      var out = document.getElementById('results');
+
+      function norm(s) {
+        return s.toLowerCase()
+          .replace(/[ً-ٰٟـ]/g, '')
+          .replace(/[أإآٱ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/ؤ/g, 'و').replace(/ئ/g, 'ي');
+      }
+      function stem(w) { return w.length > 4 && w.indexOf('ال') === 0 ? w.slice(2) : w; }
+      data.forEach(function (d) { d.n = norm(d.t + ' ' + d.k); d.tn = norm(d.t); });
+
+      function esc(s) { return s.replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+      function num() { var el = document.querySelector('[data-num]'); return el ? el.textContent : ''; }
+
+      function run() {
+        var q = norm(input.value.trim());
+        if (!q) { out.innerHTML = ''; return; }
+        var words = q.split(/\s+/).map(stem);
+        var hits = data.filter(function (d) { return words.every(function (w) { return d.n.indexOf(w) !== -1; }); });
+        hits.sort(function (a, b) { return (!!b.h - !!a.h) || (b.tn.indexOf(words[0]) === 0) - (a.tn.indexOf(words[0]) === 0); });
+        if (!hits.length) {
+          out.innerHTML = '<div class="no-result">ما لقينا هذي الحالة. إذا الوضع خطير لا تنتظر — <a href="tel:' + num() + '" style="color:inherit">اتصل بالإسعاف ' + num() + '</a></div>';
+          return;
+        }
+        out.innerHTML = hits.slice(0, 8).map(function (d) {
+          return d.h
+            ? '<a href="' + d.h + '">' + esc(d.t) + '</a>'
+            : '<div class="planned">' + esc(d.t) + '<small>قيد الإعداد — إذا الحالة خطيرة اتصل بالإسعاف ' + num() + '</small></div>';
+        }).join('');
+      }
+      input.addEventListener('input', run);
+      input.form.addEventListener('submit', function () { var a = out.querySelector('a'); if (a) location.href = a.href; });
+      if (location.hash === '#q') input.focus();
+      window.addEventListener('hashchange', function () { if (location.hash === '#q') input.focus(); });
+    })();
+  </script>
+</Base>

@@ -1,0 +1,18 @@
+{
+  "name": "atmaen1",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "images": "node scripts/gen-images.mjs",
+    "review": "node scripts/review-packet.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/readex-pro": "^5.3.0",
+    "@fontsource/ibm-plex-sans-arabic": "^5.3.0",
+    "astro": "^7.3.2"
+  }
+}

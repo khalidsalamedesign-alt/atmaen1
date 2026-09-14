@@ -1,0 +1,42 @@
+---
+import Base from '../layouts/Base.astro';
+import countries from '../data/countries.json';
+---
+<Base title="أرقام الطوارئ" description="أرقام الإسعاف والدفاع المدني والشرطة في الدول العربية.">
+  <h1>أرقام الطوارئ</h1>
+
+  <label for="country"><strong>اختر دولتك</strong> — يظهر رقم الإسعاف بأعلى كل صفحة</label>
+  <select id="country" style="margin-block:.5rem 1.5rem">
+    {countries.list.map((c) => <option value={c.id} selected={c.id === countries.default}>{c.name} — إسعاف {c.ambulance}</option>)}
+  </select>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>الدولة</th><th>إسعاف</th><th>دفاع مدني</th><th>شرطة</th><th>مركز السموم</th></tr></thead>
+      <tbody>
+        {countries.list.map((c) => (
+          <tr data-row={c.id}>
+            <td>{c.name}</td>
+            <td><a href={`tel:${c.ambulance}`}>{c.ambulance}</a></td>
+            <td><a href={`tel:${c.civil}`}>{c.civil}</a></td>
+            <td><a href={`tel:${c.police}`}>{c.police}</a></td>
+            <td>{c.poison ? <a href={`tel:${c.poison}`}>{c.poison}</a> : <span class="muted">قيد التحقق</span>}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <p class="note">الأرقام قد تتغير أو تختلف حسب المنطقة. تحقّق من رقم الطوارئ المعتمد في مدينتك. لو لاحظت رقماً خاطئاً <a href="/contact">بلّغنا</a>.</p>
+
+  <script is:inline>
+    (function () {
+      var sel = document.getElementById('country');
+      var saved = null; try { saved = localStorage.getItem('country'); } catch (e) {}
+      if (saved) sel.value = saved;
+      function mark() { document.querySelectorAll('[data-row]').forEach(function (r) { r.classList.toggle('current', r.dataset.row === sel.value); }); }
+      sel.addEventListener('change', function () { window.itmaenSetCountry(sel.value); mark(); });
+      mark();
+    })();
+  </script>
+</Base>

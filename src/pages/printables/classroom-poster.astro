@@ -1,0 +1,82 @@
+---
+import '@fontsource/ibm-plex-sans-arabic/400.css';
+import '@fontsource/ibm-plex-sans-arabic/700.css';
+import { getCase, arNum } from '../../lib/util';
+
+// الخطوات تُسحب من ملفات الحالات نفسها حتى لا يختلف الملصق عن الموقع بعد المراجعة الطبية
+const blocks = [
+  { id: 'choking-child', label: 'اختناق', pick: [2, 3, 4] },
+  { id: 'severe-bleeding', label: 'نزيف', pick: [2, 3, 4] },
+  { id: 'nosebleed', label: 'نزيف الأنف', pick: [0, 1, 3] },
+  { id: 'fainting', label: 'إغماء', pick: [1, 2, 4] },
+  { id: 'seizures', label: 'تشنجات', pick: [0, 1, 4] },
+  { id: 'asthma-attack', label: 'نوبة ربو', pick: [0, 3, 4] },
+].map((b) => {
+  const c = getCase(b.id)!;
+  return { ...b, steps: b.pick.map((i) => c.steps[i].text) };
+});
+---
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ملصق طوارئ الصف الدراسي — اطمئن</title>
+  <meta name="robots" content="noindex" />
+  <style>
+    @page { size: A4; margin: 8mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'IBM Plex Sans Arabic', Tahoma, sans-serif; color: #111; background: #ddd; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .sheet { width: 210mm; min-height: 297mm; margin: 1rem auto; background: #fff; padding: 10mm; display: flex; flex-direction: column; gap: 4mm; }
+    h1 { margin: 0; font-size: 28pt; line-height: 1.15; }
+    .call { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+    .call div { background: #b3261e; color: #fff; border-radius: 3mm; padding: 3mm 5mm; font-size: 13pt; font-weight: 700; display: flex; justify-content: space-between; align-items: center; gap: 3mm; }
+    .call div.alt { background: #0e5a64; }
+    .call span.blank { background: #fff; color: #111; border-radius: 2mm; flex: 1; max-width: 45mm; height: 9mm; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; flex: 1; }
+    section { border: 1mm solid #111; border-radius: 3mm; padding: 3.5mm 4.5mm; }
+    h2 { margin: 0 0 2mm; font-size: 17pt; }
+    ol { list-style: none; margin: 0; padding: 0; }
+    li { display: grid; grid-template-columns: 8mm 1fr; gap: 2.5mm; margin-bottom: 2mm; font-size: 11pt; font-weight: 700; line-height: 1.45; }
+    li b { display: grid; place-items: center; width: 7.5mm; height: 7.5mm; border-radius: 50%; background: #1d6b3f; color: #fff; font-size: 11pt; }
+    .rule { background: #fff4de; border: 1mm solid #f0b44c; border-radius: 3mm; padding: 3mm 5mm; font-size: 11.5pt; font-weight: 700; }
+    .foot { font-size: 9pt; color: #444; display: flex; justify-content: space-between; }
+    .bar { text-align: center; padding: .8rem; }
+    .bar button { font: inherit; font-size: 1.1rem; font-weight: 700; padding: .6rem 1.4rem; border-radius: 10px; border: 0; background: #0e5a64; color: #fff; cursor: pointer; }
+    @media print { body { background: #fff; } .sheet { margin: 0; width: auto; min-height: auto; height: 281mm; padding: 0; } .bar { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="bar"><button onclick="window.print()">اطبع الملصق</button> · <a href="/printables">رجوع</a></div>
+  <div class="sheet">
+    <h1>طوارئ الصف — ماذا أفعل؟</h1>
+    <div class="call">
+      <div>الإسعاف <span class="blank"></span></div>
+      <div class="alt">ممرض/ة المدرسة <span class="blank"></span></div>
+    </div>
+    <div class="rule">١) ابقَ هادئاً  ٢) أرسل طالباً يستدعي الإدارة أو الممرض  ٣) لا تترك الطالب المصاب وحده</div>
+    <div class="grid">
+      {blocks.map((b) => (
+        <section>
+          <h2>{b.label}</h2>
+          <ol>{b.steps.map((t, i) => <li><b>{arNum(i + 1)}</b><span>{t}</span></li>)}</ol>
+        </section>
+      ))}
+    </div>
+    <div class="foot">
+      <span>اطمئن — الخطوات الكاملة لكل حالة على الموقع</span>
+      <span>مسوّدة غير مراجعة طبياً — لا تُطبع للتوزيع قبل المراجعة</span>
+    </div>
+  </div>
+  <script is:inline>
+    // تصغير الملصق ليناسب شاشة الجوال — الطباعة تبقى بحجم A4
+    (function () {
+      var s = document.querySelector('.sheet');
+      function fit() { s.style.zoom = ''; var w = s.offsetWidth + 16; if (innerWidth < w) s.style.zoom = String(innerWidth / w); }
+      fit(); addEventListener('resize', fit);
+      addEventListener('beforeprint', function () { s.style.zoom = ''; });
+      addEventListener('afterprint', fit);
+    })();
+  </script>
+</body>
+</html>

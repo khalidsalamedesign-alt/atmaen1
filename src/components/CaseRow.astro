@@ -1,0 +1,26 @@
+---
+import Icon from './Icon.astro';
+import type { Case } from '../lib/util';
+import { urgencyLabel } from '../data/taxonomy';
+
+interface Props { item?: Case; planned?: { title: string } }
+const { item, planned } = Astro.props;
+---
+{item ? (
+  <a class="row-card" href={`/case/${item.id}`}>
+    <span class="chip-icon"><Icon name={item.icon} /></span>
+    <span class="txt">
+      <strong>{item.title} {item.urgency === 'critical' && <span class="pill crit badge">{urgencyLabel.critical}</span>}</strong>
+      <span>{item.summary}</span>
+    </span>
+    <Icon name="chev" class="chev" size={20} />
+  </a>
+) : (
+  <div class="row-card planned">
+    <span class="chip-icon"><Icon name="doc" /></span>
+    <span class="txt">
+      <strong>{planned!.title}</strong>
+      <span>قيد الإعداد — إذا الحالة خطيرة اتصل بالإسعاف</span>
+    </span>
+  </div>
+)}

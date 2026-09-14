@@ -1,0 +1,162 @@
+---
+import Base from '../../layouts/Base.astro';
+import countries from '../../data/countries.json';
+const defNum = countries.list.find((c) => c.id === countries.default)!.ambulance;
+---
+<Base title="مؤقّت الإنعاش القلبي" description="إيقاع صوتي ومرئي لضغطات الإنعاش القلبي بالمعدل الصحيح (١١٠ ضغطة بالدقيقة)." back="/case/cpr">
+  <h1>مؤقّت الإنعاش</h1>
+  <p class="muted nonessential" style="margin:0">اتصلت بالإسعاف؟ إذا لا — <a href={`tel:${defNum}`} data-call>اتصل الآن <span data-num>{defNum}</span></a> وخلّ الجوال على السماعة.</p>
+
+  <div class="cpr">
+    <div class="mode" role="radiogroup" aria-label="نوع الإنعاش">
+      <button type="button" data-mode="hands" aria-pressed="true">ضغطات فقط</button>
+      <button type="button" data-mode="30-2" aria-pressed="false">٣٠ ضغطة + نفَسين (مدرّب)</button>
+    </div>
+
+    <div class="pulse-wrap">
+      <div class="pulse" id="pulse" aria-hidden="true"></div>
+      <div class="pulse-label">
+        <div class="big" id="count">٠</div>
+        <div id="sub">اضغط «ابدأ»</div>
+      </div>
+    </div>
+
+    <div class="banner" id="banner" hidden></div>
+
+    <button class="btn btn-primary start" type="button" id="start">ابدأ</button>
+
+    <dl class="stats">
+      <div><dt>الوقت</dt><dd id="elapsed">٠٠:٠٠</dd></div>
+      <div><dt>المعدل</dt><dd>١١٠ / دقيقة</dd></div>
+    </dl>
+
+    <ul class="tips nonessential">
+      <li>اضغط مع كل نبضة: كعب اليد بمنتصف الصدر، بعمق ٥–٦ سم، واترك الصدر يرجع كامل.</li>
+      <li>في آيفون، إذا الجوال على الصامت ممكن ما يطلع صوت — تابع الدائرة.</li>
+      <li>الشاشة تبقى شغّالة طول ما المؤقّت يعمل (إذا المتصفح يدعم ذلك).</li>
+    </ul>
+  </div>
+
+  <style>
+    .cpr { display: grid; gap: 1rem; margin-top: 1rem; }
+    .mode { display: flex; gap: .5rem; }
+    .mode button { flex: 1; font: inherit; font-weight: 700; padding: .6rem; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+    .mode button[aria-pressed='true'] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+    .pulse-wrap { position: relative; display: grid; place-items: center; aspect-ratio: 1; max-width: 20rem; width: 100%; margin-inline: auto; }
+    .pulse { position: absolute; inset: 8%; border-radius: 50%; background: var(--red); opacity: .15; transition: transform .08s ease-out, opacity .08s; }
+    .pulse.beat { transform: scale(1.12); opacity: .9; }
+    .pulse.breath { background: var(--brand); opacity: .5; }
+    .pulse-label { position: relative; text-align: center; }
+    .pulse-label .big { font-size: 5rem; font-weight: 700; line-height: 1; }
+    .banner { text-align: center; font-size: 1.3rem; font-weight: 700; padding: .8rem; border-radius: 12px; background: var(--brand-soft); color: var(--brand); }
+    .start { font-size: 1.5rem; min-height: 4rem; }
+    .start.stop { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin: 0; }
+    .stats div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: .6rem; text-align: center; }
+    .stats dt { font-size: .85rem; color: var(--ink-2); }
+    .stats dd { margin: 0; font-size: 1.4rem; font-weight: 700; }
+    .tips { list-style: disc; padding-inline-start: 1.4rem; color: var(--ink-2); font-size: .95rem; }
+  </style>
+
+  <script is:inline>
+    (function () {
+      var BPM = 110, BEAT = 60 / BPM, BREATH_PAUSE = 5, SWAP_EVERY = 120;
+      var ar = function (n) { return String(n).replace(/\d/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'[d]; }); };
+      var $ = function (id) { return document.getElementById(id); };
+      var pulse = $('pulse'), countEl = $('count'), sub = $('sub'), banner = $('banner'), startBtn = $('start'), elapsedEl = $('elapsed');
+
+      var mode = 'hands', running = false, ctx = null, nextTime = 0, count = 0, lookahead = null, clock = null, startMs = 0, lastSwap = 0, wake = null, pending = [];
+
+      document.querySelectorAll('[data-mode]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          mode = b.dataset.mode;
+          document.querySelectorAll('[data-mode]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+        });
+      });
+
+      function click(t, accent) {
+        if (!ctx) return;
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.frequency.value = accent ? 1320 : 880;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.7, t + 0.004);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(t); o.stop(t + 0.08);
+      }
+
+      function at(t, fn) {
+        var ms = Math.max(0, (t - ctx.currentTime) * 1000);
+        pending.push(setTimeout(fn, ms));
+      }
+
+      function showBanner(text, secs) {
+        banner.textContent = text; banner.hidden = false;
+        pending.push(setTimeout(function () { banner.hidden = true; }, secs * 1000));
+      }
+
+      function beatVisual(n) {
+        countEl.textContent = ar(mode === '30-2' ? n : n);
+        pulse.classList.remove('breath');
+        pulse.classList.add('beat');
+        setTimeout(function () { pulse.classList.remove('beat'); }, 120);
+        if (navigator.vibrate) navigator.vibrate(35);
+      }
+
+      function schedule() {
+        while (nextTime < ctx.currentTime + 0.15) {
+          count++;
+          var n = mode === '30-2' ? ((count - 1) % 30) + 1 : count;
+          click(nextTime, n === 1 || (mode === 'hands' && n % 10 === 1));
+          (function (n) { at(nextTime, function () { beatVisual(n); }); })(n);
+          if (mode === '30-2' && n === 30) {
+            at(nextTime + BEAT, function () {
+              pulse.classList.add('breath');
+              sub.textContent = 'أعطِ نفَسين الآن';
+              showBanner('نفَسين — ثم نرجع للضغطات', BREATH_PAUSE);
+            });
+            nextTime += BEAT + BREATH_PAUSE;
+            at(nextTime, function () { sub.textContent = 'اضغط مع كل نبضة'; });
+          } else {
+            nextTime += BEAT;
+          }
+        }
+      }
+
+      function tick() {
+        var s = Math.floor((Date.now() - startMs) / 1000);
+        elapsedEl.textContent = ar(String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'));
+        if (s - lastSwap >= SWAP_EVERY) { lastSwap = s; showBanner('مرّت دقيقتان — إذا معك أحد، بدّلوا الآن', 6); }
+      }
+
+      async function start() {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) { ctx = ctx || new AC(); if (ctx.state === 'suspended') await ctx.resume(); }
+        else { ctx = { currentTime: 0 }; var t0 = performance.now(); Object.defineProperty(ctx, 'currentTime', { get: function () { return (performance.now() - t0) / 1000; } }); }
+        running = true; count = 0; lastSwap = 0; startMs = Date.now();
+        nextTime = ctx.currentTime + 0.1;
+        sub.textContent = 'اضغط مع كل نبضة';
+        startBtn.textContent = 'إيقاف'; startBtn.classList.add('stop');
+        lookahead = setInterval(schedule, 25); schedule();
+        clock = setInterval(tick, 250); tick();
+        try { if ('wakeLock' in navigator) wake = await navigator.wakeLock.request('screen'); } catch (e) {}
+      }
+
+      function stop() {
+        running = false;
+        clearInterval(lookahead); clearInterval(clock);
+        pending.forEach(clearTimeout); pending = [];
+        startBtn.textContent = 'ابدأ'; startBtn.classList.remove('stop');
+        sub.textContent = 'متوقف'; banner.hidden = true; pulse.className = 'pulse';
+        if (wake) { wake.release().catch(function () {}); wake = null; }
+      }
+
+      startBtn.addEventListener('click', function () { running ? stop() : start(); });
+      document.addEventListener('visibilitychange', async function () {
+        if (running && document.visibilityState === 'visible' && 'wakeLock' in navigator) {
+          try { wake = await navigator.wakeLock.request('screen'); } catch (e) {}
+        }
+      });
+    })();
+  </script>
+</Base>

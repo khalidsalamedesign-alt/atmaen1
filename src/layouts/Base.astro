@@ -1,0 +1,167 @@
+---
+import '@fontsource-variable/readex-pro';
+import '../styles/global.css';
+import Icon from '../components/Icon.astro';
+import countries from '../data/countries.json';
+
+interface Props {
+  title: string;
+  description?: string;
+  back?: string | false;
+  ogImage?: string;
+  jsonld?: object[];
+}
+const {
+  title,
+  description = 'مرجع عربي مبسّط للإسعافات الأولية والطوارئ المنزلية — خطوات واضحة وقت الحاجة.',
+  back = '/',
+  ogImage = '/og/site.png',
+  jsonld = [],
+} = Astro.props;
+const path = Astro.url.pathname.replace(/\.html$/, '');
+const isHome = path === '/' || path === '/index';
+const fullTitle = isHome ? 'اطمئن — الإسعافات الأولية والطوارئ المنزلية' : `${title} — اطمئن`;
+const def = countries.list.find((c) => c.id === countries.default)!;
+const numMap = Object.fromEntries(countries.list.map((c) => [c.id, c.ambulance]));
+const canonical = new URL(isHome ? '/' : path, Astro.site);
+
+const section = isHome ? 'home'
+  : path.startsWith('/tools') || path.startsWith('/printables') || path.startsWith('/first-aid-kit') ? 'tools'
+  : path.startsWith('/emergency-numbers') ? 'numbers' : '';
+const cur = (s: string) => (section === s ? 'page' : undefined);
+---
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>{fullTitle}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonical} />
+  <meta name="theme-color" content="#f3f6f5" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#061114" media="(prefers-color-scheme: dark)" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <meta property="og:type" content={isHome ? 'website' : 'article'} />
+  <meta property="og:site_name" content="اطمئن" />
+  <meta property="og:title" content={fullTitle} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:locale" content="ar_AR" />
+  <meta property="og:image" content={new URL(ogImage, Astro.site)} />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  {isHome && (
+    <script type="application/ld+json" set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'اطمئن',
+      alternateName: 'اطمئن — الإسعافات الأولية والطوارئ المنزلية',
+      url: Astro.site!.href,
+      inLanguage: 'ar',
+    })} />
+  )}
+  {jsonld.map((d) => <script type="application/ld+json" set:html={JSON.stringify(d)} />)}
+  <script is:inline>
+    try { if (localStorage.getItem('em') === '1') document.documentElement.dataset.em = '1'; } catch (e) {}
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">تخطَّ إلى المحتوى</a>
+
+  <header class="topbar">
+    <div class="wrap">
+      {!isHome && back && (
+        <a class="icon-btn" href={back} aria-label="رجوع"><Icon name="back" size={22} /></a>
+      )}
+      <a class="brand" href="/" aria-label="اطمئن — الرئيسية">
+        <span class="logo" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 3h5v6.5H21v5h-6.5V21h-5v-6.5H3v-5h6.5z"/></svg>
+        </span>
+        <span>اطمئن</span>
+      </a>
+      <a class="icon-btn desktop-only" href="/#q" aria-label="بحث"><Icon name="search" size={22} /></a>
+      <a class="call-pill desktop-only" href={`tel:${def.ambulance}`} data-call>
+        <Icon name="phone" size={18} /><span>إسعاف</span><span class="num" data-num>{def.ambulance}</span>
+      </a>
+      <button class="icon-btn" type="button" id="em-toggle" aria-pressed="false" aria-label="وضع الطوارئ: خط أكبر وعناصر أقل" title="وضع الطوارئ">
+        <Icon name="contrast" size={22} />
+      </button>
+    </div>
+  </header>
+
+  <main id="main" class="wrap">
+    <slot />
+  </main>
+
+  <footer class="site-footer nonessential">
+    <div class="wrap">
+      <div class="inner">
+        <a class="brand" href="/">
+          <span class="logo" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 3h5v6.5H21v5h-6.5V21h-5v-6.5H3v-5h6.5z"/></svg></span>
+          <span>اطمئن</span>
+        </a>
+        <nav aria-label="روابط الموقع">
+          <a href="/emergency-numbers">أرقام الطوارئ</a>
+          <a href="/tools">الأدوات</a>
+          <a href="/tools/body-map">ابحث حسب العضو</a>
+          <a href="/first-aid-kit">حقيبة الإسعافات</a>
+          <a href="/printables">مطبوعات</a>
+          <a href="/about">عن الموقع</a>
+          <a href="/medical-review">من راجع المحتوى</a>
+          <a href="/disclaimer">إخلاء المسؤولية</a>
+          <a href="/privacy">الخصوصية</a>
+          <a href="/contact">اتصل بنا</a>
+        </nav>
+        <p style="margin:0"><strong>هذا الموقع لا يُغني عن الإسعاف ولا عن الطبيب.</strong> في أي حالة خطيرة، اتصل بالإسعاف أولاً.</p>
+      </div>
+    </div>
+  </footer>
+
+  <nav class="tabbar" aria-label="التنقل الرئيسي">
+    <ul>
+      <li><a class="tab" href="/" aria-current={cur('home')}><Icon name="home" />الرئيسية</a></li>
+      <li><a class="tab" href="/#q"><Icon name="search" />بحث</a></li>
+      <li>
+        <a class="tab tab-sos" href={`tel:${def.ambulance}`} data-call>
+          <span class="sos-btn"><Icon name="phone" /></span>
+          <span class="sr-only">اتصل بالإسعاف </span><span data-num>{def.ambulance}</span>
+        </a>
+      </li>
+      <li><a class="tab" href="/tools" aria-current={cur('tools')}><Icon name="grid" />الأدوات</a></li>
+      <li><a class="tab" href="/emergency-numbers" aria-current={cur('numbers')}><Icon name="globe" />الأرقام</a></li>
+    </ul>
+  </nav>
+
+  <script is:inline define:vars={{ numMap, defId: countries.default }}>
+    (function () {
+      var root = document.documentElement;
+      function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+      function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+      window.itmaenApplyCountry = function (id) {
+        var num = numMap[id] || numMap[defId];
+        document.querySelectorAll('[data-num]').forEach(function (el) { el.textContent = num; });
+        document.querySelectorAll('[data-call]').forEach(function (el) { el.href = 'tel:' + num; });
+      };
+      window.itmaenSetCountry = function (id) { set('country', id); window.itmaenApplyCountry(id); };
+      window.itmaenApplyCountry(get('country') || defId);
+
+      var btn = document.getElementById('em-toggle');
+      function sync() { btn.setAttribute('aria-pressed', root.dataset.em === '1' ? 'true' : 'false'); }
+      sync();
+      btn.addEventListener('click', function () {
+        if (root.dataset.em === '1') { delete root.dataset.em; set('em', '0'); }
+        else { root.dataset.em = '1'; set('em', '1'); }
+        sync();
+      });
+
+      if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+        window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js'); });
+      }
+    })();
+  </script>
+</body>
+</html>

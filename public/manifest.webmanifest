@@ -1,0 +1,25 @@
+{
+  "name": "اطمئن — الإسعافات الأولية",
+  "short_name": "اطمئن",
+  "description": "مرجع عربي مبسّط للإسعافات الأولية والطوارئ المنزلية",
+  "lang": "ar",
+  "dir": "rtl",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f3f6f5",
+  "theme_color": "#0a5c63",
+  "categories": ["medical", "health", "education"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "مؤقّت الإنعاش", "url": "/tools/cpr-timer", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "اختناق", "url": "/case/choking-adult", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "أرقام الطوارئ", "url": "/emergency-numbers", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

@@ -1,0 +1,134 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+---
+<Base title="بطاقة الطوارئ العائلية" description="عبّئ معلومات الطوارئ لعائلتك واطبعها — البيانات لا تغادر جهازك.">
+  <div class="no-print">
+    <h1>بطاقة الطوارئ العائلية</h1>
+    <p class="note"><strong>🔒 بياناتك لا تغادر جهازك.</strong> لا تُرسل لأي خادم ولا نشوفها. إذا ما فعّلت الحفظ، تنمسح لما تقفل الصفحة.</p>
+  </div>
+
+  <form id="card" class="fc" onsubmit="return false">
+    <div class="print-head">
+      <h2>بطاقة الطوارئ — <span data-out="family">العائلة</span></h2>
+      <p>الإسعاف: <strong data-num>997</strong></p>
+    </div>
+
+    <fieldset>
+      <legend>معلومات عامة</legend>
+      <label>اسم العائلة<input class="field" name="family" autocomplete="off" /></label>
+      <label>العنوان أو أقرب معلم<input class="field" name="address" autocomplete="off" /></label>
+      <label>أقرب مستشفى طوارئ<input class="field" name="hospital" autocomplete="off" /></label>
+    </fieldset>
+
+    <fieldset>
+      <legend>أرقام التواصل</legend>
+      <div class="two">
+        <label>جهة اتصال ١ (الاسم والرقم)<input class="field" name="contact1" autocomplete="off" /></label>
+        <label>جهة اتصال ٢ (الاسم والرقم)<input class="field" name="contact2" autocomplete="off" /></label>
+        <label>طبيب العائلة / المركز الصحي<input class="field" name="doctor" autocomplete="off" /></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>أفراد العائلة</legend>
+      <div id="members"></div>
+      <button type="button" class="btn no-print" id="add">+ أضف فرداً</button>
+    </fieldset>
+  </form>
+
+  <div class="actions no-print">
+    <button class="btn btn-primary" type="button" onclick="window.print()"><Icon name="print" size={20} />اطبع أو احفظ PDF</button>
+    <label class="save"><input type="checkbox" id="save" /> احفظ على هذا الجهاز فقط</label>
+    <button class="btn" type="button" id="clear">امسح كل البيانات</button>
+  </div>
+  <p class="muted no-print" style="font-size:.9rem;margin-top:1rem">للحفظ كملف PDF: اضغط «اطبع» ثم اختر «حفظ بتنسيق PDF». اطبعها فارغة إذا تفضّل تعبئتها بالقلم.</p>
+
+  <template id="member-tpl">
+    <div class="member">
+      <div class="two">
+        <label>الاسم<input class="field" data-k="name" autocomplete="off" /></label>
+        <label>تاريخ الميلاد<input class="field" data-k="dob" autocomplete="off" /></label>
+        <label>فصيلة الدم<input class="field" data-k="blood" autocomplete="off" /></label>
+        <label>الحساسية (أدوية، أكل، لسعات)<input class="field" data-k="allergy" autocomplete="off" /></label>
+        <label>أمراض مزمنة<input class="field" data-k="conditions" autocomplete="off" /></label>
+        <label>أدوية دائمة<input class="field" data-k="meds" autocomplete="off" /></label>
+      </div>
+      <button type="button" class="link no-print" data-remove>حذف هذا الفرد</button>
+    </div>
+  </template>
+
+  <style>
+    .fc fieldset { border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem; margin: 0 0 1rem; background: var(--surface); }
+    .fc legend { font-weight: 700; padding-inline: .4rem; }
+    .fc label { display: block; font-size: .9rem; font-weight: 700; margin-bottom: .6rem; }
+    .fc .field { margin-top: .2rem; font-size: 1rem; padding: .55rem .8rem; border-width: 1px; }
+    .two { display: grid; gap: 0 1rem; }
+    @media (min-width: 36rem) { .two { grid-template-columns: 1fr 1fr; } }
+    .member { border-top: 2px dashed var(--line); padding-top: .8rem; margin-top: .8rem; }
+    .member:first-child { border-top: 0; margin-top: 0; padding-top: 0; }
+    .link { background: none; border: 0; color: var(--red); font: inherit; font-size: .9rem; cursor: pointer; padding: 0; }
+    .save { display: inline-flex; align-items: center; gap: .4rem; font-weight: 700; }
+    .save input { width: 1.2rem; height: 1.2rem; }
+    .print-head { display: none; }
+    @media print {
+      .print-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #000; margin-bottom: 8pt; }
+      .print-head h2 { margin: 0; }
+      .fc fieldset { border: 1px solid #000; break-inside: avoid; padding: 6pt 8pt; }
+      .fc .field { border: 0; border-bottom: 1px solid #999; border-radius: 0; padding: 2pt 0; min-height: 18pt; }
+      .fc label { margin-bottom: 4pt; }
+      .member { break-inside: avoid; }
+      .two { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+
+  <script is:inline>
+    (function () {
+      var KEY = 'family-card';
+      var form = document.getElementById('card'), list = document.getElementById('members'), tpl = document.getElementById('member-tpl');
+      var saveBox = document.getElementById('save');
+      function store(fn) { try { return fn(); } catch (e) { return null; } }
+
+      function addMember(data) {
+        var node = tpl.content.firstElementChild.cloneNode(true);
+        node.querySelectorAll('[data-k]').forEach(function (i) { i.value = (data && data[i.dataset.k]) || ''; });
+        node.querySelector('[data-remove]').addEventListener('click', function () { node.remove(); persist(); });
+        list.appendChild(node);
+      }
+      function collect() {
+        var d = { members: [] };
+        form.querySelectorAll('[name]').forEach(function (i) { d[i.name] = i.value; });
+        list.querySelectorAll('.member').forEach(function (m) {
+          var o = {}; m.querySelectorAll('[data-k]').forEach(function (i) { o[i.dataset.k] = i.value; }); d.members.push(o);
+        });
+        return d;
+      }
+      function persist() {
+        var d = collect();
+        document.querySelector('[data-out="family"]').textContent = d.family || 'العائلة';
+        if (saveBox.checked) store(function () { localStorage.setItem(KEY, JSON.stringify(d)); });
+      }
+
+      var saved = store(function () { return JSON.parse(localStorage.getItem(KEY)); });
+      if (saved) {
+        saveBox.checked = true;
+        form.querySelectorAll('[name]').forEach(function (i) { i.value = saved[i.name] || ''; });
+        (saved.members.length ? saved.members : [null]).forEach(addMember);
+      } else {
+        addMember(); addMember();
+      }
+      persist();
+
+      form.addEventListener('input', persist);
+      document.getElementById('add').addEventListener('click', function () { addMember(); });
+      saveBox.addEventListener('change', function () {
+        if (saveBox.checked) persist(); else store(function () { localStorage.removeItem(KEY); });
+      });
+      document.getElementById('clear').addEventListener('click', function () {
+        if (!confirm('تمسح كل البيانات من هذه الصفحة ومن الجهاز؟')) return;
+        store(function () { localStorage.removeItem(KEY); });
+        form.reset(); list.innerHTML = ''; addMember(); addMember(); saveBox.checked = false; persist();
+      });
+    })();
+  </script>
+</Base>

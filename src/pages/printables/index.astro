@@ -1,0 +1,26 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+---
+<Base title="مطبوعات" description="ملصقات إسعافات أولية جاهزة للطباعة والتعليق بالبيت والمدرسة.">
+  <h1>مطبوعات</h1>
+  <p class="muted">ملصقات تُطبع وتُعلّق — في المطبخ، الصف، أو غرفة الأطفال.</p>
+  <div class="grid">
+    <a class="row-card" href="/printables/choking-poster">
+      <Icon name="choking" />
+      <div><strong>ملصق خطوات الاختناق</strong><span>للمطبخ — بالغ وطفل ورضيع · A4</span></div>
+    </a>
+    <a class="row-card" href="/printables/classroom-poster">
+      <Icon name="child" />
+      <div><strong>ملصق طوارئ الصف الدراسي</strong><span>٦ حالات شائعة بالمدارس · A4</span></div>
+    </a>
+    <a class="row-card" href="/first-aid-kit">
+      <Icon name="doc" />
+      <div><strong>قائمة محتويات حقيبة الإسعافات</strong><span>قائمة تأشير قابلة للطباعة</span></div>
+    </a>
+    <a class="row-card" href="/tools/family-card">
+      <Icon name="home" />
+      <div><strong>بطاقة الطوارئ العائلية</strong><span>عبّئها على الجهاز أو اطبعها فارغة</span></div>
+    </a>
+  </div>
+</Base>

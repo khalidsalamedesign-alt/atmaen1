@@ -1,0 +1,21 @@
+{
+  "_note": "الأرقام تحتاج تحقق من المصادر الرسمية لكل دولة قبل الإطلاق. مراكز السموم متروكة فارغة عمداً حتى يُتحقق منها.",
+  "default": "sa",
+  "list": [
+    { "id": "sa", "name": "السعودية", "ambulance": "997", "civil": "998", "police": "999", "poison": null },
+    { "id": "ae", "name": "الإمارات", "ambulance": "998", "civil": "997", "police": "999", "poison": null },
+    { "id": "kw", "name": "الكويت", "ambulance": "112", "civil": "112", "police": "112", "poison": null },
+    { "id": "qa", "name": "قطر", "ambulance": "999", "civil": "999", "police": "999", "poison": null },
+    { "id": "bh", "name": "البحرين", "ambulance": "999", "civil": "999", "police": "999", "poison": null },
+    { "id": "om", "name": "عُمان", "ambulance": "9999", "civil": "9999", "police": "9999", "poison": null },
+    { "id": "jo", "name": "الأردن", "ambulance": "911", "civil": "911", "police": "911", "poison": null },
+    { "id": "eg", "name": "مصر", "ambulance": "123", "civil": "180", "police": "122", "poison": null },
+    { "id": "iq", "name": "العراق", "ambulance": "122", "civil": "115", "police": "104", "poison": null },
+    { "id": "lb", "name": "لبنان", "ambulance": "140", "civil": "125", "police": "112", "poison": null },
+    { "id": "sy", "name": "سوريا", "ambulance": "110", "civil": "113", "police": "112", "poison": null },
+    { "id": "ps", "name": "فلسطين", "ambulance": "101", "civil": "102", "police": "100", "poison": null },
+    { "id": "ma", "name": "المغرب", "ambulance": "15", "civil": "15", "police": "19", "poison": null },
+    { "id": "dz", "name": "الجزائر", "ambulance": "14", "civil": "14", "police": "17", "poison": null },
+    { "id": "tn", "name": "تونس", "ambulance": "190", "civil": "198", "police": "197", "poison": null }
+  ]
+}

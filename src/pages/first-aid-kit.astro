@@ -1,0 +1,95 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+
+const groups = [
+  {
+    name: 'الجروح والنزيف',
+    items: ['شاش معقّم بمقاسات مختلفة', 'لزقات جروح بأحجام مختلفة', 'رباط ضاغط مرن (٢ على الأقل)', 'شريط لاصق طبي', 'رباط مثلث (للتعليق والتثبيت)', 'ضمادات غير لاصقة'],
+  },
+  {
+    name: 'الحروق',
+    items: ['غلاف بلاستيك نظيف (نايلون مطبخ) لتغطية الحروق', 'كمادة باردة فورية'],
+  },
+  {
+    name: 'أدوات',
+    items: ['قفازات طبية (عدة أزواج)', 'مقص طبي بطرف مدوّر', 'ملقاط', 'ميزان حرارة', 'مصباح صغير', 'بطانية حرارية (الفضية)', 'حاجز فم للإنعاش', 'أكياس بلاستيك محكمة الإغلاق', 'دبابيس أمان'],
+  },
+  {
+    name: 'التنظيف',
+    items: ['محلول ملحي معقّم (لشطف الجروح والعين)', 'صابون', 'معقّم يدين'],
+  },
+  {
+    name: 'معلومات',
+    items: ['بطاقة الطوارئ العائلية معبّأة', 'أرقام الطوارئ مكتوبة', 'دليل إسعافات أولية مطبوع'],
+  },
+  {
+    name: 'أدوية العائلة الخاصة',
+    items: ['الأدوية الموصوفة لأفراد العائلة حسب توجيه الطبيب (مثل بخاخ الربو، قلم الأدرينالين، مستلزمات السكري)'],
+  },
+];
+let n = 0;
+---
+<Base title="حقيبة الإسعافات المنزلية" description="قائمة محتويات حقيبة الإسعافات الأولية للبيت — قابلة للطباعة والتأشير.">
+  <h1>حقيبة الإسعافات المنزلية</h1>
+  <p class="muted">أشّر على الموجود عندك. التأشير يُحفظ على جهازك فقط.</p>
+
+  <div class="kit">
+    {groups.map((g) => (
+      <section class="kit-group">
+        <h2>{g.name}</h2>
+        <ul>
+          {g.items.map((it) => {
+            const id = `k${n++}`;
+            return <li><label><input type="checkbox" data-kit={id} /><span>{it}</span></label></li>;
+          })}
+        </ul>
+      </section>
+    ))}
+  </div>
+
+  <section class="box box-dont">
+    <h2><Icon name="warn" />نصائح مهمة</h2>
+    <ul>
+      <li>احفظ الحقيبة بمكان معروف لكل الكبار بالبيت، وبعيد عن متناول الأطفال</li>
+      <li>راجع تواريخ الانتهاء كل ٦ أشهر</li>
+      <li>عوّض أي شيء استخدمته مباشرة</li>
+      <li>لا تضع أدوية بدون وصفة وتعليمات واضحة</li>
+    </ul>
+  </section>
+
+  <div class="actions no-print">
+    <button class="btn btn-primary" type="button" onclick="window.print()"><Icon name="print" size={20} />اطبع القائمة</button>
+    <button class="btn" type="button" id="reset-kit">امسح التأشير</button>
+  </div>
+
+  <style>
+    .kit { display: grid; gap: 1rem; }
+    @media (min-width: 40rem) { .kit { grid-template-columns: 1fr 1fr; } }
+    .kit-group { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem; break-inside: avoid; }
+    .kit-group h2 { font-size: 1.15rem; }
+    .kit-group label { display: flex; gap: .6rem; align-items: flex-start; padding: .3rem 0; cursor: pointer; }
+    .kit-group input { width: 1.3rem; height: 1.3rem; margin-top: .35rem; flex: none; accent-color: var(--green); }
+    .kit-group input:checked + span { color: var(--ink-2); text-decoration: line-through; }
+    @media print { .kit { grid-template-columns: 1fr 1fr; } .kit-group input:checked + span { text-decoration: none; } }
+  </style>
+
+  <script is:inline>
+    (function () {
+      var KEY = 'kit';
+      var state = {}; try { state = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) {}
+      var boxes = document.querySelectorAll('[data-kit]');
+      boxes.forEach(function (b) {
+        b.checked = !!state[b.dataset.kit];
+        b.addEventListener('change', function () {
+          state[b.dataset.kit] = b.checked;
+          try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+        });
+      });
+      document.getElementById('reset-kit').addEventListener('click', function () {
+        state = {}; boxes.forEach(function (b) { b.checked = false; });
+        try { localStorage.removeItem(KEY); } catch (e) {}
+      });
+    })();
+  </script>
+</Base>

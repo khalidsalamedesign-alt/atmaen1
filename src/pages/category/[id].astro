@@ -1,0 +1,24 @@
+---
+import Base from '../../layouts/Base.astro';
+import CaseRow from '../../components/CaseRow.astro';
+import Icon from '../../components/Icon.astro';
+import { allCases, arNum } from '../../lib/util';
+import { categories, planned } from '../../data/taxonomy';
+
+export function getStaticPaths() {
+  return categories.map((c) => ({ params: { id: c.id }, props: { cat: c } }));
+}
+const { cat } = Astro.props;
+const items = allCases.filter((c) => c.category === cat.id);
+const soon = planned.filter((p) => p.category === cat.id);
+---
+<Base title={cat.name} description={`حالات ${cat.name}: خطوات الإسعافات الأولية المبسّطة.`}>
+  <header class="page-head">
+    <span class="chip-icon"><Icon name={cat.icon} size={28} /></span>
+    <div><h1>{cat.name}</h1><p>{arNum(items.length)} حالات</p></div>
+  </header>
+  <div class="grid">
+    {items.map((c) => <CaseRow item={c} />)}
+    {soon.map((p) => <CaseRow planned={p} />)}
+  </div>
+</Base>

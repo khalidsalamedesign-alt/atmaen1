@@ -1,0 +1,194 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import CaseRow from '../../components/CaseRow.astro';
+import { allCases, getCase, arNum, arMonth, toolNames, type Case } from '../../lib/util';
+import { categories, urgencyLabel } from '../../data/taxonomy';
+import countries from '../../data/countries.json';
+
+export function getStaticPaths() {
+  return allCases.map((c) => ({ params: { id: c.id }, props: { item: c } }));
+}
+
+const { item } = Astro.props as { item: Case };
+const related = item.related.map(getCase).filter(Boolean) as Case[];
+const cat = categories.find((c) => c.id === item.category)!;
+const defNum = countries.list.find((c) => c.id === countries.default)!.ambulance;
+const urgClass = item.urgency === 'critical' ? 'crit' : item.urgency === 'high' ? 'high' : '';
+
+const illusFiles = import.meta.glob('../../illustrations/*.svg', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const illus = Object.fromEntries(Object.entries(illusFiles).map(([p, s]) => [p.split('/').pop()!.replace('.svg', ''), s]));
+
+const site = Astro.site!;
+const pageUrl = new URL(`/case/${item.id}`, site).href;
+const jsonld = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'MedicalWebPage',
+    name: item.title,
+    description: item.summary,
+    url: pageUrl,
+    inLanguage: 'ar',
+    audience: { '@type': 'PeopleAudience', audienceType: 'عامة الناس' },
+    ...(item.reviewedAt ? { lastReviewed: item.reviewedAt } : {}),
+    isPartOf: { '@type': 'WebSite', name: 'اطمئن', url: site.href },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'الرئيسية', item: site.href },
+      { '@type': 'ListItem', position: 2, name: cat.name, item: new URL(`/category/${cat.id}`, site).href },
+      { '@type': 'ListItem', position: 3, name: item.title, item: pageUrl },
+    ],
+  },
+];
+---
+<Base title={item.title} description={`${item.summary} — خطوات مبسّطة، ومتى تتصل بالإسعاف، وأخطاء شائعة لا تفعلها.`} back={`/category/${cat.id}`} ogImage={`/og/${item.id}.png`} jsonld={jsonld}>
+  <article class="case">
+    {item.variants && (
+      <nav class="variants" aria-label="اختر العمر">
+        {item.variants.map((v) => (
+          <a href={`/case/${v.id}`} aria-current={v.id === item.id ? 'page' : undefined}>{v.label}</a>
+        ))}
+      </nav>
+    )}
+
+    <header class="case-hero">
+      <div class="meta">
+        <span class={`pill ${urgClass}`}>{urgencyLabel[item.urgency]}</span>
+        <a class="pill nonessential" href={`/category/${cat.id}`}>{cat.name}</a>
+        {item.reviewedAt && <span class="pill ok"><Icon name="check" />راجعه مختص · {arMonth(item.reviewedAt)}</span>}
+      </div>
+      <h1>{item.title}</h1>
+      <p class="summary nonessential">{item.summary}</p>
+    </header>
+
+    <section class="panel-card alert-call" aria-labelledby="h-call">
+      <div class="panel-head">
+        <span class="chip-icon"><Icon name="phone" size={20} /></span>
+        <h2 id="h-call">اتصل بالإسعاف فوراً إذا:</h2>
+      </div>
+      <ul>{item.callNow.map((t) => <li><Icon name="alert" />{t}</li>)}</ul>
+      <a class="big-call no-print" href={`tel:${defNum}`} data-call>
+        <Icon name="phone" size={24} />اتصل الآن <span class="num" data-num>{defNum}</span>
+      </a>
+    </section>
+
+    <section aria-labelledby="h-steps">
+      <div class="steps-head">
+        <h2 id="h-steps">الخطوات</h2>
+        <span class="progress no-print" id="progress" aria-live="polite">{arNum(0)} / {arNum(item.steps.length)}</span>
+      </div>
+      <p class="steps-hint no-print nonessential">اضغط على الخطوة بعد ما تخلصها — نبيّن لك الخطوة اللي بعدها. <button type="button" class="reset-steps" id="reset-steps" hidden>ابدأ من جديد</button></p>
+      <ol class="timeline">
+        {item.steps.map((s, i) => (
+          <li class={`tl-item${i === 0 ? ' current' : ''}`}>
+            <button type="button" class="tl-btn" aria-pressed="false">
+              <span class="tl-node" aria-hidden="true">
+                <span class="n">{arNum(i + 1)}</span>
+                <Icon name="check" size={24} class="chk" />
+              </span>
+              <span class="tl-card">
+                <span class="sr-only">الخطوة {i + 1}: </span>
+                <span class="tl-text">{s.text}</span>
+                {s.detail && <span class="tl-detail">{s.detail}</span>}
+                {s.illustration && illus[s.illustration] && <span class="illus" aria-hidden="true" set:html={illus[s.illustration]} />}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ol>
+      {item.ageNotes && (
+        <div class="age-notes">
+          {item.ageNotes.map((n) => <div><strong>{n.label}</strong>{n.text}</div>)}
+        </div>
+      )}
+    </section>
+
+    {item.tools.map((t) => toolNames[t] && (
+      <a class="tool-cta no-print" href={toolNames[t].href}>
+        <span class="chip-icon"><Icon name={t === 'cpr-timer' ? 'heart' : 'timer'} class={t === 'cpr-timer' ? 'beat' : ''} /></span>
+        افتح {toolNames[t].name}
+        <Icon name="chev" class="chev" />
+      </a>
+    ))}
+
+    <section class="panel-card alert-dont" aria-labelledby="h-dont">
+      <div class="panel-head">
+        <span class="chip-icon"><Icon name="warn" size={20} /></span>
+        <h2 id="h-dont">لا تفعل</h2>
+      </div>
+      <ul>{item.dontDo.map((t) => <li><Icon name="x" />{t}</li>)}</ul>
+    </section>
+
+    <section class="panel-card card-after" aria-labelledby="h-after">
+      <div class="panel-head">
+        <span class="chip-icon"><Icon name="hospital" size={20} /></span>
+        <h2 id="h-after">متى تروح للمستشفى حتى لو تحسّن؟</h2>
+      </div>
+      <p>{item.afterCare}</p>
+    </section>
+
+    {related.length > 0 && (
+      <section class="section nonessential" aria-labelledby="h-rel">
+        <div class="section-title"><h2 id="h-rel">حالات ذات صلة</h2></div>
+        <div class="grid">{related.map((r) => <CaseRow item={r} />)}</div>
+      </section>
+    )}
+
+    <footer class="source">
+      <p style="margin:0">
+        <strong>المصدر:</strong>
+        {item.source.url ? <a href={item.source.url} rel="noopener">{item.source.name}</a> : item.source.name}
+        · <a href="/medical-review">منهجية المراجعة</a>
+      </p>
+      <p class="print-url">اطمئن — {Astro.url.pathname}</p>
+      <div class="actions no-print nonessential">
+        <a class="btn btn-wa" href="#" data-wa data-title={item.title}><Icon name="share" size={20} />مشاركة واتساب</a>
+        <button class="btn" type="button" onclick="window.print()"><Icon name="print" size={20} />طباعة</button>
+      </div>
+    </footer>
+  </article>
+
+  <script is:inline>
+    (function () {
+      var ar = function (n) { return String(n).replace(/\d/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'[d]; }); };
+      var items = [].slice.call(document.querySelectorAll('.tl-item'));
+      var progress = document.getElementById('progress');
+      var reset = document.getElementById('reset-steps');
+
+      function update() {
+        var done = 0, currentSet = false;
+        items.forEach(function (li) {
+          var isDone = li.querySelector('.tl-btn').getAttribute('aria-pressed') === 'true';
+          li.classList.toggle('done', isDone);
+          li.classList.remove('current');
+          if (isDone) done++;
+          else if (!currentSet) { li.classList.add('current'); currentSet = true; }
+        });
+        progress.textContent = ar(done) + ' / ' + ar(items.length);
+        reset.hidden = done === 0;
+      }
+      items.forEach(function (li) {
+        var b = li.querySelector('.tl-btn');
+        b.addEventListener('click', function () {
+          b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+          update();
+          if (navigator.vibrate) try { navigator.vibrate(15); } catch (e) {}
+        });
+      });
+      reset.addEventListener('click', function () {
+        items.forEach(function (li) { li.querySelector('.tl-btn').setAttribute('aria-pressed', 'false'); });
+        update();
+      });
+
+      document.querySelectorAll('[data-wa]').forEach(function (a) {
+        var text = a.dataset.title + ' — خطوات الإسعاف الصحيحة وما لا يجب فعله:\n' + location.origin + location.pathname;
+        a.href = 'https://wa.me/?text=' + encodeURIComponent(text);
+        a.target = '_blank';
+        a.rel = 'noopener';
+      });
+    })();
+  </script>
+</Base>

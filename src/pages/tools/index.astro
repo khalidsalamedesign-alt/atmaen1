@@ -1,0 +1,46 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+---
+<Base title="الأدوات" description="أدوات تفاعلية ومطبوعات تساعدك وقت الطوارئ وقبلها.">
+  <header class="page-head">
+    <span class="chip-icon"><Icon name="grid" size={28} /></span>
+    <div><h1>الأدوات</h1><p>وقت الطوارئ وقبلها</p></div>
+  </header>
+
+  <div class="section-title"><h2>وقت الطوارئ</h2></div>
+  <div class="tools">
+    <a class="tool-card glow" href="/tools/cpr-timer">
+      <span><strong>مؤقّت الإنعاش</strong><span>إيقاع ١١٠ ضغطة بالدقيقة — صوت واهتزاز</span></span>
+      <span class="chip-icon" style="margin-inline-start:auto"><Icon name="heart" class="beat" /></span>
+    </a>
+    <a class="tool-card" href="/tools/burn-timer">
+      <span class="chip-icon"><Icon name="timer" /></span>
+      <span><strong>مؤقّت تبريد الحرق</strong><span>عدّاد ٢٠ دقيقة</span></span>
+    </a>
+    <a class="tool-card" href="/tools/body-map">
+      <span class="chip-icon"><Icon name="adult" /></span>
+      <span><strong>ابحث حسب العضو</strong><span>اضغط على مكان الإصابة</span></span>
+    </a>
+  </div>
+
+  <div class="section-title" style="margin-top:2rem"><h2>استعد مسبقاً</h2></div>
+  <div class="tools">
+    <a class="tool-card" href="/tools/family-card">
+      <span class="chip-icon"><Icon name="home" /></span>
+      <span><strong>بطاقة الطوارئ العائلية</strong><span>تبقى على جهازك</span></span>
+    </a>
+    <a class="tool-card" href="/first-aid-kit">
+      <span class="chip-icon"><Icon name="doc" /></span>
+      <span><strong>حقيبة الإسعافات</strong><span>قائمة تأشير</span></span>
+    </a>
+    <a class="tool-card" href="/emergency-numbers">
+      <span class="chip-icon"><Icon name="globe" /></span>
+      <span><strong>أرقام الطوارئ</strong><span>اختر دولتك</span></span>
+    </a>
+    <a class="tool-card" href="/printables">
+      <span class="chip-icon"><Icon name="print" /></span>
+      <span><strong>مطبوعات</strong><span>ملصقات للبيت والمدرسة</span></span>
+    </a>
+  </div>
+</Base>
